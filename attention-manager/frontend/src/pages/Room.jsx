@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { joinRoom, getRoomState } from "../api/pomodoroApi";
 
-function Room() {
-  const { roomId } = useParams();
+function Room({ roomId }) {
+
   const [roomData, setRoomData] = useState(null);
   const [timeLeft, setTimeLeft] = useState(0);
 
-  const userId = "user1"; // replace with real logged-in user
+  const userId = "user1"; // replace later
 
+  // Join room ONCE
   useEffect(() => {
     const initRoom = async () => {
       const data = await joinRoom(roomId, userId);
@@ -17,10 +18,11 @@ function Room() {
     initRoom();
   }, [roomId]);
 
+  // Single interval for syncing
   useEffect(() => {
-    if (!roomData) return;
 
     const interval = setInterval(async () => {
+
       const updated = await getRoomState(roomId);
       setRoomData(updated);
 
@@ -29,11 +31,12 @@ function Room() {
       const remaining = updated.duration - elapsed;
 
       setTimeLeft(Math.max(Math.floor(remaining), 0));
+
     }, 1000);
 
     return () => clearInterval(interval);
 
-  }, [roomData, roomId]);
+  }, [roomId]); // ✅ ONLY roomId
 
   return (
     <div>

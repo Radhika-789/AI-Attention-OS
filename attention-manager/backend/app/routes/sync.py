@@ -14,6 +14,12 @@ def sync():
 
     # Step 1: Google OAuth
     creds = get_google_creds()
+    if not creds:
+        return {
+        "error": "User not authenticated with Google"
+        }
+
+    classroom_tasks = get_classroom_tasks(creds)
 
     # Step 2: Fetch Classroom + Calendar
     classroom_tasks = get_classroom_tasks(creds)
