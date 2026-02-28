@@ -17,7 +17,7 @@ def get_classroom_tasks(creds):
         course_id = course["id"]
         course_name = course["name"]
 
-        # Assignments
+        # ---------------- ASSIGNMENTS ----------------
         coursework = service.courses().courseWork().list(
             courseId=course_id
         ).execute().get("courseWork", [])
@@ -39,23 +39,40 @@ def get_classroom_tasks(creds):
 
             status = submissions[0]["state"] if submissions else "UNKNOWN"
 
-            if status != "TURNED_IN":
-                tasks.append({
-                    "type": "assignment",
-                    "course": course_name,
-                    "title": work["title"],
-                    "due": due_date.strftime("%Y-%m-%d"),
-                    "status": status
-                })
+            if status == "TURNED_IN":
+                assignment_status = "submitted"
+            elif status == "CREATED":
+                assignment_status = "pending"
+            else:
+                assignment_status = "unknown"
 
-        # Announcements
+            days_left = (due_date - datetime.utcnow()).days
+
+            tasks.append({
+                "type": "assignment",
+                "course": course_name,
+                "title": work["title"],
+                "due": due_date.strftime("%Y-%m-%d"),
+                "status": assignment_status,
+                "days_left": days_left
+            })
+
+        # ---------------- ANNOUNCEMENTS ----------------
         announcements = service.courses().announcements().list(
             courseId=course_id
         ).execute().get("announcements", [])
 
         for ann in announcements:
+
+            text = ann.get("text", "").lower()
+
+            if any(word in text for word in ["quiz", "exam", "test", "midsem", "endsem"]):
+                ann_type = "assessment_announcement"
+            else:
+                ann_type = "general_announcement"
+
             tasks.append({
-                "type": "announcement",
+                "type": ann_type,
                 "course": course_name,
                 "content": ann.get("text", "")
             })

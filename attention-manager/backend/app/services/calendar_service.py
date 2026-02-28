@@ -18,7 +18,7 @@ def get_calendar_events(creds):
         if "dateTime" in event["start"]:
             event_list.append({
                 "type": "calendar_event",
-                "title": event["summary"],
+                "title": event.get("summary", "No Title"),
                 "date": event["start"]["dateTime"][:10]
             })
 

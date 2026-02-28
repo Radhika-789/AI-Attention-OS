@@ -4,35 +4,28 @@ from fastapi import APIRouter
 from auth.google_oauth import get_google_creds
 from services.classroom_service import get_classroom_tasks
 from services.calendar_service import get_calendar_events
-from services.priority_engine import add_days_left, detect_overload, get_ai_prioritization
-from services.notification_service import send_email
+from services.priority_engine import dynamic_priority_engine
 
 router = APIRouter()
+
 
 @router.get("/sync")
 def sync():
 
+    # Step 1: Google OAuth
     creds = get_google_creds()
 
+    # Step 2: Fetch Classroom + Calendar
     classroom_tasks = get_classroom_tasks(creds)
     calendar_events = get_calendar_events(creds)
 
+    # Step 3: Merge All Tasks
     all_tasks = classroom_tasks + calendar_events
 
-    all_tasks = add_days_left(all_tasks)
-
-    overload = detect_overload(all_tasks)
-
-    ai_response = get_ai_prioritization(all_tasks)
-
-    if overload:
-        send_email(
-            "High Academic Load 🚨",
-            ai_response
-        )
+    # Step 4: Run Priority Engine
+    ai_response = dynamic_priority_engine(all_tasks)
 
     return {
-        "tasks": all_tasks,
-        "overload": overload,
+        "raw_tasks": all_tasks,     # 🔥 IMPORTANT ADDITION
         "ai_analysis": ai_response
     }
